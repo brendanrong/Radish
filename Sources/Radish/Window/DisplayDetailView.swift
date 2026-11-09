@@ -27,7 +27,19 @@ struct DisplayDetailView: View {
                 .padding(.vertical, 6)
             }
 
-            if let mirrorName = display.mirrorName {
+            if Displays.isRemoteDesktopDisplay(display.id) {
+                Section {
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "ipad.landscape").font(.title2).foregroundStyle(Brand.accent)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Jump Desktop controls this display").font(.headline)
+                            Text("It's already sized for your iPad, and Jump puts back its own size if anything else changes it. Use Change Resolution in Jump on your iPad instead.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            } else if let mirrorName = display.mirrorName {
                 Section {
                     HStack(spacing: 12) {
                         Image(systemName: "rectangle.on.rectangle")

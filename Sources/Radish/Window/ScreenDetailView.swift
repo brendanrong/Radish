@@ -38,14 +38,12 @@ struct ScreenDetailView: View {
                 Section {
                     HStack(alignment: .top, spacing: 12) {
                         Image(systemName: "pause.circle").font(.title2).foregroundStyle(Brand.accent)
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("Jump Desktop is using its own display").font(.headline)
-                            Text("With no other screen on, Jump makes a display sized for your iPad, so Radish steps aside. This screen comes back by itself when Jump's display goes away.")
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Jump Desktop has taken over the screens").font(.headline)
+                            Text("Jump switched off your Mac's screens for this session and is showing its own display, already sized for your iPad. Radish steps aside and comes back when the session ends.")
                                 .foregroundStyle(.secondary)
-                            if let jump = model.displays.first(where: { Displays.isRemoteDesktopDisplay($0.id) }) {
-                                Button("Change Jump's text size") { model.selection = .display(jump.id) }
-                                    .buttonStyle(.link).padding(.top, 2)
-                            }
+                            Text("To change text size now, use Change Resolution in Jump on your iPad. To use One desktop or Its own screen during Jump sessions, turn off Lock Mac screen in Jump's privacy settings so your screens stay on.")
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .padding(.vertical, 4)
@@ -69,7 +67,9 @@ struct ScreenDetailView: View {
             } header: {
                 Text("Text size")
             } footer: {
-                Text("Default matches iPadOS exactly. More Space fits more on screen with smaller text.")
+                Text(model.paused
+                     ? "Picks apply when the screen comes back after your Jump session."
+                     : "Default matches iPadOS exactly. More Space fits more on screen with smaller text.")
                     .foregroundStyle(.secondary)
             }
             .disabled(!screen.enabled)
