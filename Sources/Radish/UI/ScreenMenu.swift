@@ -7,9 +7,9 @@ enum ScreenMenu {
         let item = NSMenuItem(title: screen.name, action: nil, keyEquivalent: "")
         item.state = screen.enabled ? .on : .off
         let looks = screen.selected
-        item.subtitle = screen.enabled
-            ? "Looks like \(looks.label)\(screen.mirrorsOthers ? ", mirrored" : "")"
-            : "Off"
+        item.subtitle = !screen.enabled ? "Off"
+            : VirtualScreenManager.shared.paused ? "Paused while Jump Desktop has its own display"
+            : "Looks like \(looks.label)\(screen.mirrorsOthers ? ", mirrored" : "")"
 
         let sub = NSMenu()
         sub.autoenablesItems = false

@@ -11,7 +11,13 @@ final class VirtualScreenManager {
 
     private(set) var screens: [VirtualScreen] = ScreenStore.load()
     private var live: [UUID: CGVirtualDisplay] = [:]
+    private var startedAt: [UUID: Date] = [:]
+    private var pendingCheck: DispatchWorkItem?
     var onChange: (() -> Void)?
+
+    /// True while Jump Desktop is showing its own display. Jump only makes one when the Mac
+    /// has no screen of its own, and sizes it to the iPad, so Radish steps aside.
+    private(set) var paused = false
 
     var anyEnabled: Bool { screens.contains { $0.enabled } }
 
@@ -20,8 +26,52 @@ final class VirtualScreenManager {
     // MARK: Lifecycle
 
     func startAll() {
+        guard !paused else { return }
+        if Displays.online().contains(where: Displays.isRemoteDesktopDisplay) {
+            paused = true
+            Log.write("Jump Desktop has its own display, virtual screens wait")
+            changed()
+            return
+        }
         for screen in screens where screen.enabled { start(screen) }
         changed()
+        scheduleCheck()
+    }
+
+    /// Runs after any display change: pause for Jump, resume after it, and bring back
+    /// a screen macOS dropped.
+    func scheduleCheck() {
+        pendingCheck?.cancel()
+        let work = DispatchWorkItem { MainActor.assumeIsolated { VirtualScreenManager.shared.check() } }
+        pendingCheck = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
+    }
+
+    private func check() {
+        let online = Displays.online()
+        let jump = online.contains(where: Displays.isRemoteDesktopDisplay)
+        if jump && !paused {
+            paused = true
+            Log.write("Jump Desktop has its own display, pausing virtual screens")
+            for id in Array(live.keys) { stop(id) }
+            changed()
+        } else if !jump && paused {
+            paused = false
+            Log.write("Jump Desktop display gone, resuming virtual screens")
+            startAll()
+        } else if !paused {
+            for screen in screens where screen.enabled {
+                guard let display = live[screen.id], !online.contains(display.displayID),
+                      Date().timeIntervalSince(startedAt[screen.id] ?? .distantPast) > 4 else { continue }
+                Log.write("\(screen.name) was dropped by macOS, bringing it back")
+                live[screen.id] = nil
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { [weak self] in
+                    guard let self, let fresh = self.screens.first(where: { $0.id == screen.id }), fresh.enabled else { return }
+                    self.start(fresh)
+                    self.changed()
+                }
+            }
+        }
     }
 
     func stopAll() {
@@ -29,7 +79,7 @@ final class VirtualScreenManager {
     }
 
     private func start(_ screen: VirtualScreen) {
-        guard live[screen.id] == nil else { return }
+        guard live[screen.id] == nil, !paused else { return }
         let options = screen.options
         // Modes are listed in points; with hiDPI on, macOS backs each at 2x as long
         // as that fits inside maxPixels.
@@ -68,6 +118,7 @@ final class VirtualScreenManager {
             return
         }
         live[screen.id] = display
+        startedAt[screen.id] = Date()
         Log.write("started \(screen.name) id \(display.displayID) \(screen.pixelWidth)x\(screen.pixelHeight)")
         applyLayout(screen.id, attempt: 0)
     }

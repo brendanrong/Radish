@@ -63,7 +63,7 @@ private struct ScreenRow: View {
         Label {
             VStack(alignment: .leading, spacing: 1) {
                 Text(screen.name).lineLimit(1)
-                Text(screen.enabled ? "Looks like \(screen.selected.label)" : "Off")
+                Text(!screen.enabled ? "Off" : AppModel.shared.paused ? "Paused for Jump Desktop" : "Looks like \(screen.selected.label)")
                     .font(.caption).foregroundStyle(.secondary)
             }
         } icon: {

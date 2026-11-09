@@ -84,6 +84,8 @@ final class AppModel {
     private(set) var screens: [VirtualScreen] = []
     private(set) var displays: [DisplayInfo] = []
     private(set) var launchAtLogin = false
+    /// Virtual screens are stepping aside for Jump Desktop's own display.
+    private(set) var paused = false
     var selection: SidebarItem? = .general
     var restoreResolutions = ModeMemory.shared.enabled {
         didSet { ModeMemory.shared.enabled = restoreResolutions }
@@ -109,6 +111,7 @@ final class AppModel {
 
     func refresh() {
         screens = manager.screens
+        paused = manager.paused
         displays = Displays.online()
             .filter { !Displays.isRadish($0) }
             .map { id in

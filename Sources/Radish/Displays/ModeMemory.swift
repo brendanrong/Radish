@@ -41,7 +41,10 @@ final class ModeMemory {
     func startObserving() {
         CGDisplayRegisterReconfigurationCallback({ _, flags, _ in
             guard !flags.contains(.beginConfigurationFlag) else { return }
-            DispatchQueue.main.async { NotificationCenter.default.post(name: .radishChanged, object: nil) }
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .radishChanged, object: nil)
+                MainActor.assumeIsolated { VirtualScreenManager.shared.scheduleCheck() }
+            }
             guard flags.contains(.addFlag) || flags.contains(.enabledFlag) else { return }
             DispatchQueue.main.async { ModeMemory.shared.scheduleRestore() }
         }, nil)

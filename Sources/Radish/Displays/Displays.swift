@@ -18,6 +18,11 @@ enum Displays {
         CGDisplayVendorNumber(id) == VirtualScreenManager.vendorID
     }
 
+    /// The display Jump Desktop makes for a session when the Mac has no screen of its own.
+    static func isRemoteDesktopDisplay(_ id: CGDirectDisplayID) -> Bool {
+        name(id).hasPrefix("Jump Desktop Display")
+    }
+
     /// A mirrored display has no NSScreen, so names are remembered the last time they were seen.
     static func name(_ id: CGDirectDisplayID) -> String {
         let screenKey = NSDeviceDescriptionKey("NSScreenNumber")
@@ -94,7 +99,9 @@ enum Displays {
 
     /// Makes every other display (built-in, external, TV) show `master`, so there's one desktop.
     static func mirrorOthers(onto master: CGDirectDisplayID) {
-        let others = online().filter { $0 != master && !isRadish($0) && CGDisplayMirrorsDisplay($0) != master }
+        let others = online().filter {
+            $0 != master && !isRadish($0) && !isRemoteDesktopDisplay($0) && CGDisplayMirrorsDisplay($0) != master
+        }
         guard !others.isEmpty else { return }
         Log.write("mirroring \(others.map { name($0) }) onto \(master)")
         configure { config in

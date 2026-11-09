@@ -21,9 +21,9 @@ struct ScreenDetailView: View {
                             .onSubmit { model.rename(screen.id, name) }
                         Text(verbatim: "\(screen.pixelWidth) × \(screen.pixelHeight) pixels · \(Int(screen.ppi)) ppi")
                             .foregroundStyle(.secondary)
-                        Text(screen.enabled ? "Connected" : "Off")
+                        Text(!screen.enabled ? "Off" : model.paused ? "Paused for Jump Desktop" : "Connected")
                             .font(.callout.weight(.medium))
-                            .foregroundStyle(screen.enabled ? Brand.accent : .secondary)
+                            .foregroundStyle(screen.enabled && !model.paused ? Brand.accent : .secondary)
                     }
                     Spacer()
                     Toggle("Connected", isOn: binding(screen.enabled) { model.setEnabled(screen.id, $0) })
@@ -32,6 +32,24 @@ struct ScreenDetailView: View {
                         .controlSize(.large)
                 }
                 .padding(.vertical, 6)
+            }
+
+            if model.paused && screen.enabled {
+                Section {
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: "pause.circle").font(.title2).foregroundStyle(Brand.accent)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Jump Desktop is using its own display").font(.headline)
+                            Text("With no other screen on, Jump makes a display sized for your iPad, so Radish steps aside. This screen comes back by itself when Jump's display goes away.")
+                                .foregroundStyle(.secondary)
+                            if let jump = model.displays.first(where: { Displays.isRemoteDesktopDisplay($0.id) }) {
+                                Button("Change Jump's text size") { model.selection = .display(jump.id) }
+                                    .buttonStyle(.link).padding(.top, 2)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
             }
 
             Section {
