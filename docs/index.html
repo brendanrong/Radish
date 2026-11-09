@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radish: virtual screens shaped like your iPad</title>
+<meta name="description" content="Radish is a tiny macOS menu bar app that adds a virtual display at your iPad's exact size, so Jump Desktop and other remote apps fill the screen with sharp HiDPI and no letterbox.">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta property="og:title" content="Radish: virtual screens shaped like your iPad">
+<meta property="og:description" content="Exact iPad sizes, sharp HiDPI, no letterbox, no dummy plug. Free and open source.">
+<meta property="og:image" content="https://brendanrong.github.io/Radish/icon.png">
+<style>
+  :root {
+    --radish:#C8174A; --radish-dark:#9E0F38; --radish-soft:#FCE4EA;
+    --ink:#1d1d1f; --body:#3c3c43; --muted:#6e6e73;
+    --bg:#fdf7f8; --card:#ffffff; --line:#f0dce1;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html { scroll-behavior:smooth; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--body); background:var(--bg); font-size:18px; line-height:1.65; -webkit-font-smoothing:antialiased;
+  }
+  a { color:var(--radish-dark); }
+  .wrap { max-width:880px; margin:0 auto; padding:0 24px; }
+
+  .hero { text-align:center; padding:88px 24px 40px; }
+  .hero img.icon { width:156px; height:156px; }
+  h1 { font-size:64px; letter-spacing:-1.5px; line-height:1.05; color:var(--ink); margin:4px 0 14px; }
+  .tag { font-size:24px; color:var(--ink); font-weight:500; letter-spacing:-.2px; }
+  .sub { font-size:19px; color:var(--muted); max-width:580px; margin:10px auto 34px; }
+  .cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn { display:inline-block; background:var(--radish); color:#fff; text-decoration:none; font-weight:600; font-size:18px; padding:15px 34px; border-radius:14px; transition:background .15s ease, transform .15s ease; }
+  .btn:hover { background:var(--radish-dark); transform:translateY(-1px); }
+  .btn.ghost { background:transparent; color:var(--radish-dark); border:1.5px solid var(--line); }
+  .btn.ghost:hover { background:var(--radish-soft); border-color:var(--radish-soft); transform:none; }
+  .req { font-size:15px; color:var(--muted); margin-top:18px; }
+
+  /* Illustration: the Radish menu, drawn in HTML so it stays crisp. */
+  .shot-band { background:linear-gradient(180deg, var(--bg) 0%, #f9e6eb 100%); padding:24px 24px 72px; }
+  .stage { position:relative; max-width:640px; margin:0 auto; display:flex; justify-content:center; gap:0; align-items:flex-start; }
+  .menu { width:330px; background:rgba(246,246,248,.96); border:1px solid rgba(0,0,0,.12); border-radius:12px; padding:5px; box-shadow:0 30px 70px rgba(90,10,35,.20), 0 3px 8px rgba(90,10,35,.10); font-size:13.5px; line-height:1.3; color:#1d1d1f; text-align:left; }
+  .menu.sub { width:250px; margin-top:34px; margin-left:-6px; }
+  .menu .h { font-size:11.5px; font-weight:600; color:#86868b; padding:6px 10px 3px; }
+  .menu .i { display:flex; align-items:center; gap:8px; padding:4px 10px; border-radius:6px; }
+  .menu .i.on { background:#C8174A; color:#fff; }
+  .menu .i.on small { color:rgba(255,255,255,.8); }
+  .menu .i b { width:12px; font-weight:600; flex:none; }
+  .menu .i span { flex:1; }
+  .menu .i small { display:block; color:#86868b; font-size:11.5px; }
+  .menu .i em { font-style:normal; color:#86868b; }
+  .menu .i.on em { color:#fff; }
+  .menu hr { border:0; border-top:1px solid rgba(0,0,0,.1); margin:5px 10px; }
+
+  section { padding:72px 0 8px; }
+  .eyebrow { display:block; color:var(--radish); font-weight:700; font-size:14px; letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px; }
+  h2 { font-size:38px; letter-spacing:-.8px; line-height:1.15; color:var(--ink); margin-bottom:12px; }
+  .lede { font-size:20px; color:var(--muted); max-width:640px; margin-bottom:36px; }
+
+  .grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:26px 24px 24px; }
+  .card svg { width:30px; height:30px; stroke:var(--radish); fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; margin-bottom:16px; }
+  .card h3 { font-size:19px; color:var(--ink); letter-spacing:-.2px; margin-bottom:6px; }
+  .card p { font-size:16.5px; color:var(--body); line-height:1.55; }
+
+  .sizes { width:100%; border-collapse:collapse; background:var(--card); border:1px solid var(--line); border-radius:18px; overflow:hidden; font-size:16.5px; }
+  .sizes th, .sizes td { text-align:left; padding:12px 18px; border-bottom:1px solid var(--line); }
+  .sizes th { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; background:#fffafb; }
+  .sizes tr:last-child td { border-bottom:0; }
+  .sizes td:nth-child(n+2) { font-variant-numeric:tabular-nums; white-space:nowrap; }
+
+  .steps { counter-reset:step; display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+  .step { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:26px 24px 24px; }
+  .step::before { counter-increment:step; content:counter(step); display:inline-block; width:34px; height:34px; line-height:34px; text-align:center; border-radius:50%; background:var(--radish-soft); color:var(--radish-dark); font-weight:700; margin-bottom:14px; }
+  .step h3 { font-size:19px; color:var(--ink); margin-bottom:6px; }
+  .step p { font-size:16.5px; line-height:1.55; }
+  .tips { margin-top:18px; background:var(--card); border:1px solid var(--line); border-radius:18px; padding:22px 26px; }
+  .tips h3 { font-size:17px; color:var(--ink); margin-bottom:6px; }
+  .tips ul { list-style:none; }
+  .tips li { position:relative; padding:5px 0 5px 22px; font-size:16.5px; line-height:1.55; }
+  .tips li::before { content:""; position:absolute; left:4px; top:15px; width:7px; height:7px; border-radius:50%; background:var(--radish); }
+  code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.88em; background:#fff; border:1px solid var(--line); border-radius:6px; padding:1px 6px; color:var(--ink); }
+
+  .faq details { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px 22px; margin-bottom:10px; }
+  .faq summary { cursor:pointer; font-weight:600; color:var(--ink); font-size:17.5px; }
+  .faq details p { margin-top:10px; font-size:16.5px; }
+
+  .release { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:26px 28px; margin-bottom:14px; }
+  .release header { display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; margin-bottom:8px; }
+  .release h3 { font-size:22px; color:var(--ink); letter-spacing:-.3px; }
+  .release h3 a { color:inherit; text-decoration:none; }
+  .release h3 a:hover { color:var(--radish-dark); }
+  .release time { color:var(--muted); font-size:15px; }
+  .release p { font-size:17px; margin-bottom:6px; }
+  .release ul { list-style:none; margin-top:8px; }
+  .release li { position:relative; padding:4px 0 4px 22px; font-size:16.5px; }
+  .release li::before { content:""; position:absolute; left:4px; top:14px; width:7px; height:7px; border-radius:50%; background:var(--radish); }
+  .more { font-size:15px; color:var(--muted); margin-top:16px; }
+
+  footer { text-align:center; color:var(--muted); font-size:14px; padding:72px 24px 80px; line-height:2; }
+  footer img { width:40px; height:40px; display:block; margin:0 auto 6px; opacity:.9; }
+
+  @media (max-width: 820px) {
+    .grid, .steps { grid-template-columns:repeat(2, 1fr); }
+    .menu.sub { display:none; }
+  }
+  @media (max-width: 560px) {
+    body { font-size:17px; }
+    h1 { font-size:48px; }
+    .tag { font-size:21px; }
+    h2 { font-size:30px; }
+    .grid, .steps { grid-template-columns:1fr; }
+    section { padding:56px 0 8px; }
+    .menu { width:100%; }
+    .sizes { font-size:14.5px; }
+    .sizes th, .sizes td { padding:10px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <img class="icon" src="icon.png" alt="Radish app icon">
+  <h1>Radish</h1>
+  <p class="tag">Virtual screens shaped like your iPad.</p>
+  <p class="sub">A tiny menu bar app that gives your Mac a display at your iPad's exact size, so Jump Desktop and other remote apps fill the whole screen. Sharp HiDPI, no black bars, no dummy plug.</p>
+  <div class="cta">
+    <a class="btn" href="https://github.com/brendanrong/Radish/releases/latest/download/Radish.dmg">Download for Mac</a>
+    <a class="btn ghost" href="https://github.com/brendanrong/Radish">View on GitHub</a>
+  </div>
+  <p class="req">Requires macOS 15 or later &middot; Free &middot; Open source (MIT)</p>
+</header>
+
+<div class="shot-band">
+  <div class="stage" role="img" aria-label="The Radish menu: an iPad Pro 11 inch virtual screen that looks like 1210 by 834 and mirrors the built-in display, with its Looks like options open">
+    <div class="menu">
+      <div class="h">Virtual Screens</div>
+      <div class="i on"><b>&#10003;</b><span>iPad Pro 11" (M4, M5)<small>Looks like 1210 × 834, mirrored</small></span><em>&rsaquo;</em></div>
+      <div class="i"><b></b><span>New Virtual Screen</span><em>&rsaquo;</em></div>
+      <hr>
+      <div class="h">Displays</div>
+      <div class="i"><b></b><span>Studio Display<small>2560 × 1440, HiDPI</small></span><em>&rsaquo;</em></div>
+      <hr>
+      <div class="i"><b>&#10003;</b><span>Restore Resolutions on Reconnect</span></div>
+      <div class="i"><b>&#10003;</b><span>Launch at Login</span></div>
+      <hr>
+      <div class="i"><b></b><span>About Radish</span></div>
+      <div class="i"><b></b><span>Quit Radish</span><em>&#8984;Q</em></div>
+    </div>
+    <div class="menu sub" aria-hidden="true">
+      <div class="i"><b>&#10003;</b><span>Connected</span></div>
+      <div class="h">Looks like</div>
+      <div class="i"><b>&#10003;</b><span>1210 × 834<small>Sharpest, matches iPadOS</small></span></div>
+      <div class="i"><b></b><span>1361 × 938</span></div>
+      <div class="i"><b></b><span>1513 × 1043</span></div>
+      <div class="i"><b></b><span>1815 × 1251</span></div>
+      <div class="i"><b></b><span>2420 × 1668<small>1x, tiny text</small></span></div>
+      <hr>
+      <div class="i"><b></b><span>Portrait</span></div>
+      <div class="i"><b>&#10003;</b><span>Mirror Built-in Display</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <section id="features">
+    <span class="eyebrow">What it does</span>
+    <h2>Your iPad, full screen.<br>Your Mac, sharp.</h2>
+    <p class="lede">Remote desktop apps stream whatever display your Mac has. Give it one the same shape as your iPad and the picture fills the glass, edge to edge.</p>
+    <div class="grid">
+      <div class="card">
+        <svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="2.5"/><path d="M11 18h2"/></svg>
+        <h3>Exact iPad sizes</h3>
+        <p>Presets for every current iPad, down to the pixel. The 11" iPad Pro (M4) is 2420 × 1668, not the older 2388 × 1668 most tools ship.</p>
+      </div>
+      <div class="card">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>
+        <h3>Sharp by default</h3>
+        <p>HiDPI at 2x, exactly how iPadOS draws. Want more room? Pick a larger "looks like" size from the same menu.</p>
+      </div>
+      <div class="card">
+        <svg viewBox="0 0 24 24"><rect x="2.5" y="5" width="12" height="9" rx="1.5"/><rect x="9.5" y="10" width="12" height="9" rx="1.5"/></svg>
+        <h3>Mirror or extend</h3>
+        <p>Mirror your MacBook's screen onto the iPad shape so you see one desktop, or make the virtual screen your main display. Portrait works too.</p>
+      </div>
+      <div class="card">
+        <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v4.5h-4.5"/></svg>
+        <h3>No more tiny text</h3>
+        <p>Radish remembers the resolution you pick for each display and puts it back when the display reconnects or your Mac wakes.</p>
+      </div>
+      <div class="card">
+        <svg viewBox="0 0 24 24"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <h3>Every resolution</h3>
+        <p>A resolution picker for all your displays, including the HiDPI sizes System Settings hides.</p>
+      </div>
+      <div class="card">
+        <svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg>
+        <h3>Scriptable</h3>
+        <p><code>radish://on</code>, <code>radish://off</code> and <code>radish://toggle</code> work from Shortcuts, scripts or the address bar.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="sizes">
+    <span class="eyebrow">Built-in sizes</span>
+    <h2>Every iPad, pixel for pixel.</h2>
+    <p class="lede">Pick yours from New Virtual Screen. Anything else, enter a custom size.</p>
+    <table class="sizes">
+      <thead><tr><th>Device</th><th>Native</th><th>Looks like (sharpest)</th></tr></thead>
+      <tbody>
+        <tr><td>iPad Pro 11" (M4, M5)</td><td>2420 × 1668</td><td>1210 × 834</td></tr>
+        <tr><td>iPad Pro 13" (M4, M5)</td><td>2752 × 2064</td><td>1376 × 1032</td></tr>
+        <tr><td>iPad Air 11" / iPad 11"</td><td>2360 × 1640</td><td>1180 × 820</td></tr>
+        <tr><td>iPad Air 13" / iPad Pro 12.9"</td><td>2732 × 2048</td><td>1366 × 1024</td></tr>
+        <tr><td>iPad mini (A17 Pro)</td><td>2266 × 1488</td><td>1133 × 744</td></tr>
+        <tr><td>iPad Pro 11" (2018 to 2022)</td><td>2388 × 1668</td><td>1194 × 834</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="jump">
+    <span class="eyebrow">Remote in from your iPad</span>
+    <h2>Set up once with Jump Desktop.</h2>
+    <p class="lede">Works the same with Screens, Parsec, Chrome Remote Desktop or anything else that streams your Mac's display.</p>
+    <div class="steps">
+      <div class="step">
+        <h3>Add your iPad</h3>
+        <p>Click the radish in the menu bar, then <strong>New Virtual Screen</strong> and your iPad model. Say yes to Launch at Login.</p>
+      </div>
+      <div class="step">
+        <h3>Pick how it shows</h3>
+        <p>On a MacBook, turn on <strong>Mirror Built-in Display</strong>. On a headless Mac mini, turn on <strong>Use as Main Display</strong>.</p>
+      </div>
+      <div class="step">
+        <h3>Connect</h3>
+        <p>In Jump Desktop's settings on the iPad, turn on <strong>Retina resolution</strong>, then connect. No black bars, nothing tiny.</p>
+      </div>
+    </div>
+    <div class="tips">
+      <h3>For a Mac you reach from anywhere</h3>
+      <ul>
+        <li>Keep it awake: turn on "Prevent automatic sleeping when the display is off" in Energy settings, or use an app like Amphetamine.</li>
+        <li>Turn on "Start up automatically after a power failure" so it comes back by itself.</li>
+        <li>With FileVault on, nothing runs after a restart until someone logs in at the Mac. That's macOS, not Radish.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="faq" class="faq">
+    <span class="eyebrow">Questions</span>
+    <h2>Good to know</h2>
+    <details>
+      <summary>Why does Radish need to keep running?</summary>
+      <p>macOS removes a virtual screen when the app that made it quits. Launch at Login makes sure it's there whenever you connect.</p>
+    </details>
+    <details>
+      <summary>Does it need any permissions?</summary>
+      <p>No. Radish asks for nothing, makes no network requests and collects nothing. It uses the same macOS display API as other virtual display tools.</p>
+    </details>
+    <details>
+      <summary>Where did my window go?</summary>
+      <p>An extended virtual screen is a real display you can't see on the Mac itself. Turn on Mirror Built-in Display, or switch the screen off from the menu and macOS moves its windows back.</p>
+    </details>
+    <details>
+      <summary>Something looks wrong. Where do I look?</summary>
+      <p>Radish logs what it does to <code>~/Library/Logs/Radish.log</code>. Include it when you <a href="https://github.com/brendanrong/Radish/issues">report a problem</a>.</p>
+    </details>
+  </section>
+
+  <section id="changelog">
+    <span class="eyebrow">Changelog</span>
+    <h2>What's new</h2>
+    <div id="releases">
+      <article class="release">
+        <header><h3><a href="https://github.com/brendanrong/Radish/releases/tag/v0.1.0">0.1.0</a></h3><time>9 November 2026</time></header>
+        <p>First release.</p>
+        <ul>
+          <li>Virtual screens with exact presets for every current iPad, plus custom sizes</li>
+          <li>Sharp HiDPI "looks like" sizes, portrait, mirror built-in, use as main display</li>
+          <li>Resolution picker for every display, including hidden HiDPI modes</li>
+          <li>Restores your resolutions on reconnect and wake</li>
+          <li>radish:// on, off and toggle commands, launch at login</li>
+        </ul>
+      </article>
+    </div>
+    <p class="more">Full notes for every version are on <a href="https://github.com/brendanrong/Radish/releases">GitHub Releases</a>.</p>
+  </section>
+
+</div>
+
+<footer>
+  <img src="icon.png" alt="">
+  Radish &copy; 2026 Brendan Rong &middot; <a href="https://github.com/brendanrong/Radish/blob/main/LICENSE">MIT License</a><br>
+  <a href="https://github.com/brendanrong/Radish">Source on GitHub</a> &middot; <a href="https://github.com/brendanrong/Radish/issues">Report a problem</a>
+</footer>
+
+<script>
+// The changelog mirrors GitHub Releases, so a new release updates this page by itself.
+// The entry above is the fallback when the API is unreachable or rate limited.
+(async () => {
+  try {
+    const res = await fetch("https://api.github.com/repos/brendanrong/Radish/releases?per_page=20", { headers: { Accept: "application/vnd.github+json" } });
+    if (!res.ok) return;
+    const releases = (await res.json()).filter(r => !r.draft && !r.prerelease);
+    if (!releases.length) return;
+    const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    const body = md => {
+      const lines = md.replace(/\r/g, "").split("\n").map(l => l.trim()).filter(Boolean);
+      const bullets = lines.filter(l => /^[-*] /.test(l)).map(l => `<li>${esc(l.slice(2))}</li>`);
+      const paras = lines.filter(l => !/^[-*] /.test(l)).map(l => `<p>${esc(l)}</p>`);
+      return (paras[0] || "") + (bullets.length ? `<ul>${bullets.join("")}</ul>` : "") + paras.slice(1).join("");
+    };
+    document.getElementById("releases").innerHTML = releases.map(r => {
+      const date = new Date(r.published_at).toLocaleDateString("en-AU", { day: "numeric", month: "long", year: "numeric" });
+      return `<article class="release"><header><h3><a href="${r.html_url}">${esc(r.tag_name.replace(/^v/, ""))}</a></h3><time>${date}</time></header>${body(r.body || "")}</article>`;
+    }).join("");
+  } catch (_) { /* keep the static entry */ }
+})();
+</script>
+</body>
+</html>
