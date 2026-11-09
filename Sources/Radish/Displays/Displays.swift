@@ -117,6 +117,43 @@ enum Displays {
         }
     }
 
+    /// Moves `id` past the outer edge of all your other screens on one side, lined up with
+    /// `anchor` (the main display), so it never lands on top of another screen.
+    static func place(_ id: CGDirectDisplayID, _ side: VirtualScreen.Position, of anchor: CGDirectDisplayID) {
+        let a = CGDisplayBounds(anchor)
+        let b = CGDisplayBounds(id)
+        let others = online().filter { $0 != id && CGDisplayMirrorsDisplay($0) == kCGNullDirectDisplay }
+        let all = others.map(CGDisplayBounds).reduce(a) { $0.union($1) }
+        let origin: CGPoint
+        switch side {
+        case .right: origin = CGPoint(x: all.maxX, y: a.minY)
+        case .left: origin = CGPoint(x: all.minX - b.width, y: a.minY)
+        case .above: origin = CGPoint(x: a.midX - b.width / 2, y: all.minY - b.height)
+        case .below: origin = CGPoint(x: a.midX - b.width / 2, y: all.maxY)
+        }
+        guard abs(b.origin.x - origin.x) > 1 || abs(b.origin.y - origin.y) > 1 else { return }
+        Log.write("placing \(name(id)) \(side.rawValue) of \(name(anchor))")
+        configure { CGConfigureDisplayOrigin($0, id, Int32(origin.x.rounded()), Int32(origin.y.rounded())) }
+    }
+
+    /// The display a virtual screen is arranged around: the main one, unless that's ours,
+    /// in which case the display you last had as main (e.g. your TV), then any other.
+    static func anchor(excluding id: CGDirectDisplayID) -> CGDirectDisplayID? {
+        let candidates = online().filter {
+            $0 != id && !isRadish($0) && CGDisplayMirrorsDisplay($0) == kCGNullDirectDisplay
+        }
+        if let main = candidates.first(where: { CGDisplayIsMain($0) != 0 }) { return main }
+        let lastMain = UserDefaults.standard.string(forKey: "lastMainDisplay")
+        return candidates.first { key($0) == lastMain } ?? candidates.first
+    }
+
+    /// Remembers which real display is main, so it can be handed back after mirroring.
+    static func rememberMain() {
+        guard let main = online().first(where: { CGDisplayIsMain($0) != 0 }),
+              !isRadish(main), !isRemoteDesktopDisplay(main) else { return }
+        UserDefaults.standard.set(key(main), forKey: "lastMainDisplay")
+    }
+
     /// The main display is the one at origin (0, 0); shift everything else to match.
     static func makeMain(_ id: CGDirectDisplayID) {
         guard CGDisplayIsMain(id) == 0 else { return }

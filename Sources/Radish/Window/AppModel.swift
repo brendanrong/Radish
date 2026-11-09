@@ -151,6 +151,7 @@ final class AppModel {
     func setPortrait(_ id: UUID, _ on: Bool) { manager.setPortrait(id, on); refresh() }
     func setMirror(_ id: UUID, _ on: Bool) { manager.setMirror(id, on); refresh() }
     func setMain(_ id: UUID, _ on: Bool) { manager.setMain(id, on); refresh() }
+    func setPosition(_ id: UUID, _ position: VirtualScreen.Position) { manager.setPosition(id, position); refresh() }
     func rename(_ id: UUID, _ name: String) {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty, screens.first(where: { $0.id == id })?.name != trimmed else { return }

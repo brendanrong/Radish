@@ -74,19 +74,48 @@ struct ScreenDetailView: View {
             }
             .disabled(!screen.enabled)
 
-            Section("Arrangement") {
+            Section {
+                Picker("Show as", selection: Binding(get: { screen.mirrorsOthers },
+                                                     set: { model.setMirror(screen.id, $0) })) {
+                    Text("One desktop").tag(true)
+                    Text("Its own screen").tag(false)
+                }
+                .pickerStyle(.segmented)
+
+                if !screen.mirrorsOthers {
+                    HStack(alignment: .center, spacing: 20) {
+                        ArrangementPreview(screen: screen)
+                            .frame(width: 170, height: 96)
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Position").font(.callout.weight(.medium))
+                            Picker("Position", selection: Binding(get: { screen.position },
+                                                                  set: { model.setPosition(screen.id, $0) })) {
+                                ForEach(VirtualScreen.Position.allCases, id: \.self) { side in
+                                    Text(side.label).tag(side)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            .labelsHidden()
+                            Text(screen.position.detail).font(.caption).foregroundStyle(.secondary)
+                        }
+                        .disabled(screen.isMain)
+                    }
+                    .padding(.vertical, 4)
+                    Toggle(isOn: binding(screen.isMain) { model.setMain(screen.id, $0) }) {
+                        Text("Use as main display")
+                        Text("Moves the menu bar and Dock here. Best for a headless Mac mini.")
+                    }
+                }
                 Toggle("Portrait", isOn: binding(screen.portrait) { model.setPortrait(screen.id, $0) })
-                Toggle(isOn: binding(screen.mirrorsOthers) { model.setMirror(screen.id, $0) }) {
-                    Text("Mirror other displays")
-                    Text("Your other screens show this one, so Jump and other remote apps stream a single desktop in this shape.")
-                }
-                .disabled(!screen.enabled)
-                Toggle(isOn: binding(screen.isMain) { model.setMain(screen.id, $0) }) {
-                    Text("Use as main display")
-                    Text("Moves the menu bar and Dock here. Best for a headless Mac mini.")
-                }
-                .disabled(!screen.enabled || screen.mirrorsOthers)
+            } header: {
+                Text("Arrangement")
+            } footer: {
+                Text(screen.mirrorsOthers
+                     ? "Every screen shows this one, so Jump streams a single desktop in its shape. Changing the size changes them all."
+                     : "A separate desktop with its own size and windows; your other screens stay as they are. In Jump, switch to this monitor to see it.")
+                    .foregroundStyle(.secondary)
             }
+            .disabled(!screen.enabled)
 
             Section {
                 Button("Remove Screen…", role: .destructive) { confirmingRemove = true }

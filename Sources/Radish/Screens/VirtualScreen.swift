@@ -16,10 +16,49 @@ struct VirtualScreen: Codable, Identifiable, Equatable {
     var isMain = false
     /// Every other display shows this screen, so remote apps stream one iPad-shaped desktop.
     var mirrorsOthers = false
+    /// When it's its own screen: which side of the main display it sits on.
+    var position: Position = .right
+
+    enum Position: String, Codable, CaseIterable {
+        case left, right, above, below
+        var label: String { rawValue.capitalized }
+        var detail: String {
+            switch self {
+            case .left: return "Past the left edge of your other screens"
+            case .right: return "Past the right edge of your other screens"
+            case .above: return "Above your main display"
+            case .below: return "Below your main display"
+            }
+        }
+    }
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, width, height, ppi, serial, enabled, portrait, scaleIndex, isMain
+        case id, name, width, height, ppi, serial, enabled, portrait, scaleIndex, isMain, position
         case mirrorsOthers = "mirrorsBuiltIn"   // stored name from 0.1
+    }
+
+    init(name: String, width: Int, height: Int, ppi: Double) {
+        self.name = name
+        self.width = width
+        self.height = height
+        self.ppi = ppi
+    }
+
+    /// Fields added after 0.1 are optional, so screens saved by older versions still load.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        name = try c.decode(String.self, forKey: .name)
+        width = try c.decode(Int.self, forKey: .width)
+        height = try c.decode(Int.self, forKey: .height)
+        ppi = try c.decode(Double.self, forKey: .ppi)
+        serial = try c.decode(UInt32.self, forKey: .serial)
+        enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? true
+        portrait = try c.decodeIfPresent(Bool.self, forKey: .portrait) ?? false
+        scaleIndex = try c.decodeIfPresent(Int.self, forKey: .scaleIndex) ?? 0
+        isMain = try c.decodeIfPresent(Bool.self, forKey: .isMain) ?? false
+        mirrorsOthers = try c.decodeIfPresent(Bool.self, forKey: .mirrorsOthers) ?? false
+        position = try c.decodeIfPresent(Position.self, forKey: .position) ?? .right
     }
 
     var pixelWidth: Int { portrait ? height : width }

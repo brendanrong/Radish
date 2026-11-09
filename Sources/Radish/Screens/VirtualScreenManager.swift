@@ -49,6 +49,7 @@ final class VirtualScreenManager {
 
     private func check() {
         let online = Displays.online()
+        Displays.rememberMain()
         let jump = online.contains(where: Displays.isRemoteDesktopDisplay)
         if jump && !paused {
             paused = true
@@ -157,6 +158,10 @@ final class VirtualScreenManager {
                 Displays.mirrorOthers(onto: displayID)
             } else if screen.isMain {
                 Displays.makeMain(displayID)
+            } else if let anchor = Displays.anchor(excluding: displayID) {
+                // Coming out of mirroring it can still be main; hand the menu bar back first.
+                if CGDisplayIsMain(displayID) != 0 { Displays.makeMain(anchor) }
+                Displays.place(displayID, screen.position, of: anchor)
             }
             self.changed()
         }
@@ -232,7 +237,13 @@ final class VirtualScreenManager {
             applyLayout(id, attempt: 0)
         } else if let displayID = displayID(for: id) {
             Displays.unmirrorAll(from: displayID)
+            applyLayout(id, attempt: 0)   // put it at its chosen side
         }
+    }
+
+    func setPosition(_ id: UUID, _ position: VirtualScreen.Position) {
+        mutate(id) { $0.position = position }
+        applyLayout(id, attempt: 0)
     }
 
     /// Mode lists and names are fixed at creation, so some edits recreate the display.

@@ -21,7 +21,7 @@ enum Snapshots {
             for (name, view, selection) in pages {
                 jobs.append {
                     if let selection { model.selection = selection }
-                    let size = selection == nil ? NSSize(width: 440, height: 560) : NSSize(width: 860, height: 580)
+                    let size = selection == nil ? NSSize(width: 440, height: 560) : NSSize(width: 860, height: 960)
                     let window = NSWindow(contentRect: NSRect(origin: NSPoint(x: -4000, y: -4000), size: size),
                                           styleMask: [.titled, .fullSizeContentView], backing: .buffered, defer: false)
                     window.appearance = NSAppearance(named: appearance)
