@@ -38,6 +38,8 @@ struct OptionCard: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(subtitle.map { "\(title), \($0)" } ?? title)
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
 
