@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Radish's app icon: a round red radish with a pale root tip and three leaves, on a
+       blush tile. The bold bulb reads at 16 px; the tip and leaves carry it at Dock size.
+       Sits on the macOS grid: an 824 pt tile on 1024 pt. -->
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF7F8"/>
+      <stop offset="1" stop-color="#FAE3E8"/>
+    </linearGradient>
+    <radialGradient id="body" cx="0.36" cy="0.3" r="0.85">
+      <stop offset="0" stop-color="#F4587C"/>
+      <stop offset="0.45" stop-color="#CF1D4B"/>
+      <stop offset="1" stop-color="#6E0824"/>
+    </radialGradient>
+    <linearGradient id="tip" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFF4F2" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#FFF4F2" stop-opacity=".85"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <linearGradient id="leaf" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#3B863A"/>
+      <stop offset="1" stop-color="#8ACF72"/>
+    </linearGradient>
+    <filter id="tile-shadow" x="-12%" y="-12%" width="124%" height="130%">
+      <feDropShadow dx="0" dy="12" stdDeviation="15" flood-color="#000" flood-opacity=".24"/>
+    </filter>
+    <filter id="fruit-shadow" x="-20%" y="-20%" width="140%" height="150%">
+      <feDropShadow dx="0" dy="16" stdDeviation="14" flood-color="#5A0820" flood-opacity=".30"/>
+    </filter>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="24"/>
+    </filter>
+    <clipPath id="bulb-clip">
+      <path id="bulb" d="M512,360C680,360 760,470 760,590C760,700 680,770 600,800C560,816 530,840 512,884C494,840 464,816 424,800C344,770 264,700 264,590C264,470 344,360 512,360Z"/>
+    </clipPath>
+  </defs>
+
+  <path d="M285,100H739A185,185 0 0 1 924,285V739A185,185 0 0 1 739,924H285A185,185 0 0 1 100,739V285A185,185 0 0 1 285,100Z"
+        fill="url(#tile)" filter="url(#tile-shadow)"/>
+  <path d="M285,100H739A185,185 0 0 1 924,285V739A185,185 0 0 1 739,924H285A185,185 0 0 1 100,739V285A185,185 0 0 1 285,100Z"
+        fill="none" stroke="#3A1B22" stroke-opacity=".12" stroke-width="4"/>
+
+  <g transform="translate(512 530) scale(0.84) translate(-512 -522)">
+    <!-- Leaves, behind the bulb. -->
+    <path d="M498,378C428,334 336,282 314,178C402,166 482,238 498,378Z" fill="url(#leaf)"/>
+    <path d="M526,378C596,334 688,282 710,178C622,166 542,238 526,378Z" fill="url(#leaf)"/>
+    <path d="M512,370C466,292 466,198 514,126C566,198 562,296 512,370Z" fill="url(#leaf)"/>
+    <g fill="none" stroke="#2E6A2C" stroke-opacity=".55" stroke-width="6" stroke-linecap="round">
+      <path d="M494,364C440,300 380,240 330,192"/>
+      <path d="M530,364C584,300 644,240 694,192"/>
+      <path d="M512,356C506,280 508,200 514,146"/>
+    </g>
+
+    <!-- Bulb. -->
+    <path d="M512,360C680,360 760,470 760,590C760,700 680,770 600,800C560,816 530,840 512,884C494,840 464,816 424,800C344,770 264,700 264,590C264,470 344,360 512,360Z"
+          fill="url(#body)" filter="url(#fruit-shadow)"/>
+    <g clip-path="url(#bulb-clip)">
+      <!-- Rim light along the lower right, so the bulb reads as round. -->
+      <ellipse cx="580" cy="700" rx="260" ry="130" fill="#E8456B" opacity=".25" filter="url(#soft)"/>
+      <!-- The pale root end. -->
+      <rect x="264" y="700" width="496" height="190" fill="url(#tip)"/>
+      <!-- Specular. -->
+      <ellipse cx="410" cy="480" rx="58" ry="34" fill="#FFFFFF" opacity=".55" transform="rotate(-32 410 480)"/>
+    </g>
+    <!-- Root hair. -->
+    <path d="M512,880C514,900 510,918 516,936" fill="none" stroke="#E9D6D2" stroke-width="7" stroke-linecap="round"/>
+  </g>
+</svg>

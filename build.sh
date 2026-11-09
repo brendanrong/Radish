@@ -1,0 +1,57 @@
+#!/bin/bash
+# Builds Radish.app into ./build using Swift Package Manager (no Xcode project needed).
+#
+#   ./build.sh                  release build
+#   CONFIG=debug ./build.sh     debug build
+#   VERSION=1.2.0 BUILD_NUMBER=42 ./build.sh    stamp the bundle version
+#
+# For a notarized DMG to distribute, use ./release.sh, which calls this script.
+set -euo pipefail
+cd "$(dirname "$0")"
+
+APP_NAME="Radish"
+CONFIG="${CONFIG:-release}"
+BUILD_DIR="build"
+APP="$BUILD_DIR/$APP_NAME.app"
+
+# Sign local builds with the same Developer ID that releases use when it's in the
+# keychain, so the login item keeps working across rebuilds. Falls back to an Apple
+# Development identity. Override with CODESIGN_IDENTITY, or set it to "-" for ad-hoc.
+if [ -z "${CODESIGN_IDENTITY:-}" ]; then
+  IDENTITIES=$(security find-identity -v -p codesigning 2>/dev/null || true)
+  CODESIGN_IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"Developer ID Application: [^"]+"' | tr -d '"' || true)
+  [ -n "$CODESIGN_IDENTITY" ] || CODESIGN_IDENTITY=$(echo "$IDENTITIES" | grep -m1 -oE '"Apple Development: [^"]+"' | tr -d '"' || true)
+fi
+IDENTITY="${CODESIGN_IDENTITY:--}"
+
+# UNIVERSAL=1 builds one binary for Apple silicon and Intel (release.sh sets it).
+ARCH_FLAGS=""
+[ "${UNIVERSAL:-0}" = "1" ] && ARCH_FLAGS="--arch arm64 --arch x86_64"
+echo "▸ swift build ($CONFIG${ARCH_FLAGS:+, universal})"
+swift build -c "$CONFIG" --product "$APP_NAME" $ARCH_FLAGS
+BIN="$(swift build -c "$CONFIG" --product "$APP_NAME" $ARCH_FLAGS --show-bin-path)/$APP_NAME"
+[ -x "$BIN" ] || { echo "build failed: $BIN missing" >&2; exit 1; }
+
+echo "▸ assembling $APP"
+rm -rf "$APP"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
+cp "$BIN" "$APP/Contents/MacOS/$APP_NAME"
+cp Resources/Info.plist "$APP/Contents/Info.plist"
+printf 'APPL????' > "$APP/Contents/PkgInfo"
+cp LICENSE "$APP/Contents/Resources/LICENSE"
+[ -n "${VERSION:-}" ] && /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$APP/Contents/Info.plist"
+[ -n "${BUILD_NUMBER:-}" ] && /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$APP/Contents/Info.plist"
+
+# The icon is drawn in Resources/AppIcon.svg and rendered by Tools/render_icon.sh;
+# the rendered .icns is committed, so building needs no browser.
+cp Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
+# Hardened runtime on every build so local builds behave like notarized ones.
+TIMESTAMP="--timestamp=none"
+case "$IDENTITY" in "Developer ID"*) TIMESTAMP="--timestamp" ;; esac
+echo "▸ codesign ($IDENTITY)"
+codesign --force --options runtime --entitlements Resources/Radish.entitlements \
+  "$TIMESTAMP" --sign "$IDENTITY" "$APP"
+
+echo "✓ built $APP"
+echo "  open \"$APP\""
