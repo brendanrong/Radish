@@ -60,6 +60,12 @@ final class VirtualScreenManager {
             Log.write("Jump Desktop display gone, resuming virtual screens")
             startAll()
         } else if !paused {
+            // Displays that show up later (TV turned on, lid opened) join the mirror too.
+            for screen in screens where screen.enabled && screen.mirrorsOthers {
+                if let display = live[screen.id], online.contains(display.displayID) {
+                    Displays.mirrorOthers(onto: display.displayID)
+                }
+            }
             for screen in screens where screen.enabled {
                 guard let display = live[screen.id], !online.contains(display.displayID),
                       Date().timeIntervalSince(startedAt[screen.id] ?? .distantPast) > 4 else { continue }
