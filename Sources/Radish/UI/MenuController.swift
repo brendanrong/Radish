@@ -24,6 +24,8 @@ final class MenuController: NSObject, NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         menu.removeAllItems()
 
+        menu.addItem(Menus.action("Open Radish…", #selector(openWindow), target: self, key: ","))
+        menu.addItem(.separator())
         menu.addItem(.sectionHeader(title: "Virtual Screens"))
         if screens.screens.isEmpty {
             menu.addItem(Menus.note("Add one shaped like your iPad below"))
@@ -147,6 +149,8 @@ final class MenuController: NSObject, NSMenuDelegate {
     }
 
     @objc private func quit() { NSApp.terminate(nil) }
+
+    @objc private func openWindow() { MainWindow.shared.show() }
 }
 
 /// Small NSMenuItem builders.

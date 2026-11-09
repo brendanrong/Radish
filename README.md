@@ -6,6 +6,7 @@ Virtual screens shaped like your iPad. A tiny macOS menu bar app that gives your
 
 ## What it does
 
+- **A proper app window** (open Radish from Finder or the menu bar, ⌘,): displays in a sidebar, resolution grids, virtual screen settings. The menu bar stays as the quick switcher
 - **Virtual screens** with exact presets for every current iPad (iPad Pro 11" M4 is 2420 × 1668) plus custom sizes
 - **HiDPI "looks like" sizes**: sharpest at 2x like iPadOS, or more space at 1.125x, 1.25x, 1.5x, or 1x native
 - **Mirror Built-in Display** (MacBook) or **Use as Main Display** (headless Mac mini), and portrait
@@ -24,6 +25,7 @@ Virtual screens shaped like your iPad. A tiny macOS menu bar app that gives your
 ```sh
 ./build.sh                               # build/Radish.app, signed with your Developer ID if present
 build/Radish.app/Contents/MacOS/Radish --list-displays   # every display and the modes it exposes
+build/Radish.app/Contents/MacOS/Radish --snapshot /tmp/s  # renders every window page, light and dark
 NOTARY_PROFILE=Cherry-Notary ./release.sh 0.1.0          # notarized build/Radish.dmg
 ```
 

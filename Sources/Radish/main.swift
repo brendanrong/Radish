@@ -28,6 +28,10 @@ if let index = CommandLine.arguments.firstIndex(of: "--render-menubar-icon"), in
     exit(0)
 }
 
+if let index = CommandLine.arguments.firstIndex(of: "--snapshot"), index + 1 < CommandLine.arguments.count {
+    MainActor.assumeIsolated { Snapshots.run(into: URL(fileURLWithPath: CommandLine.arguments[index + 1])) }
+}
+
 MainActor.assumeIsolated {
     let app = NSApplication.shared
     let delegate = AppDelegate()

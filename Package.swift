@@ -17,6 +17,7 @@ let package = Package(
             path: "Sources/Radish",
             linkerSettings: [
                 .linkedFramework("AppKit"),
+                .linkedFramework("SwiftUI"),
                 .linkedFramework("CoreGraphics"),
                 .linkedFramework("ServiceManagement"),
             ]

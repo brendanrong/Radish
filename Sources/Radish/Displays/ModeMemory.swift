@@ -40,8 +40,9 @@ final class ModeMemory {
 
     func startObserving() {
         CGDisplayRegisterReconfigurationCallback({ _, flags, _ in
-            guard !flags.contains(.beginConfigurationFlag),
-                  flags.contains(.addFlag) || flags.contains(.enabledFlag) else { return }
+            guard !flags.contains(.beginConfigurationFlag) else { return }
+            DispatchQueue.main.async { NotificationCenter.default.post(name: .radishChanged, object: nil) }
+            guard flags.contains(.addFlag) || flags.contains(.enabledFlag) else { return }
             DispatchQueue.main.async { ModeMemory.shared.scheduleRestore() }
         }, nil)
         NSWorkspace.shared.notificationCenter.addObserver(

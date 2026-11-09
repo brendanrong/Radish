@@ -9,7 +9,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         VirtualScreenManager.shared.startAll()
         ModeMemory.shared.startObserving()
         ModeMemory.shared.scheduleRestore()
+        MainMenu.install()
         menu = MenuController()
+        // Open the window on the very first launch so people find their way in.
+        if !UserDefaults.standard.bool(forKey: "hasLaunched") {
+            UserDefaults.standard.set(true, forKey: "hasLaunched")
+            MainWindow.shared.show()
+        }
+    }
+
+    /// Opening Radish from Finder, Spotlight or the Dock while it's running shows the window.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        MainWindow.shared.show()
+        return true
     }
 
     /// radish://on, radish://off and radish://toggle switch every virtual screen,

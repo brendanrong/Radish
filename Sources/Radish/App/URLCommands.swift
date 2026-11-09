@@ -9,6 +9,7 @@ enum URLCommands {
         case "on": manager.setAllEnabled(true)
         case "off": manager.setAllEnabled(false)
         case "toggle": manager.setAllEnabled(!manager.anyEnabled)
+        case "open": MainWindow.shared.show()
         default: Log.write("unknown url \(url.absoluteString)")
         }
     }

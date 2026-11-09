@@ -21,7 +21,7 @@ final class VirtualScreenManager {
 
     func startAll() {
         for screen in screens where screen.enabled { start(screen) }
-        onChange?()
+        changed()
     }
 
     func stopAll() {
@@ -101,7 +101,7 @@ final class VirtualScreenManager {
             } else if screen.isMain {
                 Displays.makeMain(displayID)
             }
-            self.onChange?()
+            self.changed()
         }
     }
 
@@ -125,7 +125,7 @@ final class VirtualScreenManager {
         screens.append(screen)
         save()
         start(screen)
-        onChange?()
+        changed()
         return screen
     }
 
@@ -133,14 +133,14 @@ final class VirtualScreenManager {
         stop(id)
         screens.removeAll { $0.id == id }
         save()
-        onChange?()
+        changed()
     }
 
     func setEnabled(_ id: UUID, _ enabled: Bool) {
         mutate(id) { $0.enabled = enabled }
         guard let screen = screens.first(where: { $0.id == id }) else { return }
         enabled ? start(screen) : stop(id)
-        onChange?()
+        changed()
     }
 
     func setAllEnabled(_ enabled: Bool) {
@@ -192,9 +192,15 @@ final class VirtualScreenManager {
         guard let index = screens.firstIndex(where: { $0.id == id }) else { return }
         change(&screens[index])
         save()
+        changed()
     }
 
     private func save() { ScreenStore.save(screens) }
+
+    private func changed() {
+        onChange?()
+        NotificationCenter.default.post(name: .radishChanged, object: nil)
+    }
 }
 
 private struct Size: Hashable {
