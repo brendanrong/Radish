@@ -67,7 +67,8 @@ final class ModeMemory {
 
     private func restoreAll() {
         guard enabled else { return }
-        for id in Displays.online() where !Displays.isRadish(id) {
+        // A mirroring display follows its source's size; changing it would break the mirror.
+        for id in Displays.online() where !Displays.isRadish(id) && CGDisplayMirrorsDisplay(id) == kCGNullDirectDisplay {
             guard let want = saved[Displays.key(id)], let current = Displays.current(id) else { continue }
             if current.width == want.width, current.height == want.height, current.pixelWidth == want.pixelWidth { continue }
             guard let mode = Displays.modes(id).first(where: {
