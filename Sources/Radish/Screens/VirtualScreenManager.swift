@@ -74,8 +74,8 @@ final class VirtualScreenManager {
 
     private func stop(_ id: UUID) {
         guard let display = live[id] else { return }
-        if let screen = screens.first(where: { $0.id == id }), screen.mirrorsBuiltIn, let builtIn = Displays.builtInID() {
-            Displays.unmirror(builtIn)
+        if let screen = screens.first(where: { $0.id == id }), screen.mirrorsOthers {
+            Displays.unmirrorAll(from: display.displayID)
         }
         Log.write("stopped id \(display.displayID)")
         live[id] = nil
@@ -96,8 +96,8 @@ final class VirtualScreenManager {
             if Displays.current(displayID).map({ !Displays.same($0, mode) }) ?? true {
                 Displays.apply(mode, to: displayID)
             }
-            if screen.mirrorsBuiltIn, let builtIn = Displays.builtInID() {
-                Displays.mirror(builtIn, of: displayID)
+            if screen.mirrorsOthers {
+                Displays.mirrorOthers(onto: displayID)
             } else if screen.isMain {
                 Displays.makeMain(displayID)
             }
@@ -170,11 +170,11 @@ final class VirtualScreenManager {
     }
 
     func setMirror(_ id: UUID, _ mirror: Bool) {
-        for screen in screens { mutate(screen.id) { $0.mirrorsBuiltIn = mirror && screen.id == id } }
+        for screen in screens { mutate(screen.id) { $0.mirrorsOthers = mirror && screen.id == id } }
         if mirror {
             applyLayout(id, attempt: 0)
-        } else if let builtIn = Displays.builtInID() {
-            Displays.unmirror(builtIn)
+        } else if let displayID = displayID(for: id) {
+            Displays.unmirrorAll(from: displayID)
         }
     }
 

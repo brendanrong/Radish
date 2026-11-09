@@ -8,7 +8,7 @@ enum ScreenMenu {
         item.state = screen.enabled ? .on : .off
         let looks = screen.selected
         item.subtitle = screen.enabled
-            ? "Looks like \(looks.label)\(screen.mirrorsBuiltIn ? ", mirrored" : "")"
+            ? "Looks like \(looks.label)\(screen.mirrorsOthers ? ", mirrored" : "")"
             : "Off"
 
         let sub = NSMenu()
@@ -29,15 +29,13 @@ enum ScreenMenu {
 
         sub.addItem(.separator())
         sub.addItem(row("Portrait", on: screen.portrait, #selector(MenuController.togglePortrait(_:)), screen, target))
-        if Displays.builtInID() != nil {
-            let mirror = row("Mirror Built-in Display", on: screen.mirrorsBuiltIn,
-                             #selector(MenuController.toggleMirror(_:)), screen, target)
-            mirror.subtitle = "One screen, shaped like your iPad"
-            mirror.isEnabled = screen.enabled
-            sub.addItem(mirror)
-        }
+        let mirror = row("Mirror Other Displays", on: screen.mirrorsOthers,
+                         #selector(MenuController.toggleMirror(_:)), screen, target)
+        mirror.subtitle = "One desktop for Jump, shaped like this screen"
+        mirror.isEnabled = screen.enabled
+        sub.addItem(mirror)
         let main = row("Use as Main Display", on: screen.isMain, #selector(MenuController.toggleMain(_:)), screen, target)
-        main.isEnabled = screen.enabled && !screen.mirrorsBuiltIn
+        main.isEnabled = screen.enabled && !screen.mirrorsOthers
         sub.addItem(main)
 
         sub.addItem(.separator())

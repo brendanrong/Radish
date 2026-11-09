@@ -14,7 +14,13 @@ struct VirtualScreen: Codable, Identifiable, Equatable {
     var portrait = false
     var scaleIndex = 0
     var isMain = false
-    var mirrorsBuiltIn = false
+    /// Every other display shows this screen, so remote apps stream one iPad-shaped desktop.
+    var mirrorsOthers = false
+
+    private enum CodingKeys: String, CodingKey {
+        case id, name, width, height, ppi, serial, enabled, portrait, scaleIndex, isMain
+        case mirrorsOthers = "mirrorsBuiltIn"   // stored name from 0.1
+    }
 
     var pixelWidth: Int { portrait ? height : width }
     var pixelHeight: Int { portrait ? width : height }

@@ -53,18 +53,16 @@ struct ScreenDetailView: View {
 
             Section("Arrangement") {
                 Toggle("Portrait", isOn: binding(screen.portrait) { model.setPortrait(screen.id, $0) })
-                if Displays.builtInID() != nil {
-                    Toggle(isOn: binding(screen.mirrorsBuiltIn) { model.setMirror(screen.id, $0) }) {
-                        Text("Mirror built-in display")
-                        Text("One desktop, shaped like this screen. Best for remote desktop from a MacBook.")
-                    }
-                    .disabled(!screen.enabled)
+                Toggle(isOn: binding(screen.mirrorsOthers) { model.setMirror(screen.id, $0) }) {
+                    Text("Mirror other displays")
+                    Text("Your other screens show this one, so Jump and other remote apps stream a single desktop in this shape.")
                 }
+                .disabled(!screen.enabled)
                 Toggle(isOn: binding(screen.isMain) { model.setMain(screen.id, $0) }) {
                     Text("Use as main display")
                     Text("Moves the menu bar and Dock here. Best for a headless Mac mini.")
                 }
-                .disabled(!screen.enabled || screen.mirrorsBuiltIn)
+                .disabled(!screen.enabled || screen.mirrorsOthers)
             }
 
             Section {

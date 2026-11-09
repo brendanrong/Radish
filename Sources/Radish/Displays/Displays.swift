@@ -83,6 +83,24 @@ enum Displays {
         configure { CGConfigureDisplayMirrorOfDisplay($0, display, kCGNullDirectDisplay) }
     }
 
+    /// Makes every other display (built-in, external, TV) show `master`, so there's one desktop.
+    static func mirrorOthers(onto master: CGDirectDisplayID) {
+        let others = online().filter { $0 != master && !isRadish($0) && CGDisplayMirrorsDisplay($0) != master }
+        guard !others.isEmpty else { return }
+        Log.write("mirroring \(others.map { name($0) }) onto \(master)")
+        configure { config in
+            for other in others { CGConfigureDisplayMirrorOfDisplay(config, other, master) }
+        }
+    }
+
+    static func unmirrorAll(from master: CGDirectDisplayID) {
+        let mirrors = online().filter { CGDisplayMirrorsDisplay($0) == master }
+        guard !mirrors.isEmpty else { return }
+        configure { config in
+            for display in mirrors { CGConfigureDisplayMirrorOfDisplay(config, display, kCGNullDirectDisplay) }
+        }
+    }
+
     /// The main display is the one at origin (0, 0); shift everything else to match.
     static func makeMain(_ id: CGDirectDisplayID) {
         guard CGDisplayIsMain(id) == 0 else { return }
