@@ -27,25 +27,60 @@ struct DisplayDetailView: View {
                 .padding(.vertical, 6)
             }
 
-            modeSection("HiDPI", footer: "Sharp text at 2x. Includes sizes System Settings hides.",
-                        modes: display.modes.filter(\.hiDPI))
-            modeSection("Standard", footer: nil, modes: display.modes.filter { !$0.hiDPI })
-
-            if model.restoreResolutions {
+            if let mirrorName = display.mirrorName {
                 Section {
-                    Label("Radish puts back the size you pick here whenever this display reconnects or your Mac wakes.",
-                          systemImage: "arrow.counterclockwise")
-                        .foregroundStyle(.secondary)
+                    HStack(spacing: 12) {
+                        Image(systemName: "rectangle.on.rectangle")
+                            .font(.title2).foregroundStyle(Brand.accent)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Showing \(mirrorName)").font(.headline)
+                            Text("This display mirrors your virtual screen, so it follows that screen's size.")
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button("Stop Mirroring") { model.stopMirroring(display) }
+                    }
+                    .padding(.vertical, 4)
+                }
+            } else {
+                Section {
+                    ScalePicker(options: scaleOptions, selected: display.current?.id) { id in
+                        if let mode = display.modes.first(where: { $0.id == id }) { model.apply(mode, to: display.id) }
+                    }
+                    DisclosureGroup("All resolutions") {
+                        modeGrid("Sharp (HiDPI)", modes: display.modes.filter(\.hiDPI))
+                        modeGrid("Standard", modes: display.modes.filter { !$0.hiDPI })
+                    }
+                } header: {
+                    Text("Text size")
+                } footer: {
+                    if model.restoreResolutions {
+                        Text("Radish puts this size back whenever the display reconnects or your Mac wakes.")
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
         }
         .formStyle(.grouped)
     }
 
+    private var scaleOptions: [ScaleOption] {
+        let choices = display.scaleChoices
+        let narrowest = choices.first?.width ?? 1
+        return choices.enumerated().map { index, mode in
+            let title: String? = mode == display.defaultMode ? "Default"
+                : index == 0 ? "Larger Text"
+                : index == choices.count - 1 ? "More Space" : nil
+            return ScaleOption(id: mode.id, title: title, caption: mode.label,
+                               textSize: ScalePicker.textSize(width: mode.width, narrowest: narrowest))
+        }
+    }
+
     @ViewBuilder
-    private func modeSection(_ title: String, footer: String?, modes: [ModeInfo]) -> some View {
+    private func modeGrid(_ title: String, modes: [ModeInfo]) -> some View {
         if !modes.isEmpty {
-            Section {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title).font(.caption.weight(.semibold)).foregroundStyle(.secondary).padding(.top, 8)
                 CardGrid(minimum: 118) {
                     ForEach(modes) { mode in
                         OptionCard(title: mode.label, selected: mode == display.current) {
@@ -53,10 +88,6 @@ struct DisplayDetailView: View {
                         }
                     }
                 }
-            } header: {
-                Text(title)
-            } footer: {
-                if let footer { Text(footer).foregroundStyle(.secondary) }
             }
         }
     }

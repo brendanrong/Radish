@@ -35,21 +35,26 @@ struct ScreenDetailView: View {
             }
 
             Section {
-                CardGrid {
-                    ForEach(Array(screen.options.enumerated()), id: \.offset) { index, option in
-                        OptionCard(title: option.label, subtitle: subtitle(index, option),
-                                   selected: index == selectedIndex) {
-                            model.setScale(screen.id, index)
+                ScalePicker(options: scaleOptions, selected: String(selectedIndex)) {
+                    model.setScale(screen.id, Int($0) ?? 0)
+                }
+                DisclosureGroup("All sizes") {
+                    CardGrid {
+                        ForEach(Array(screen.options.enumerated()), id: \.offset) { index, option in
+                            OptionCard(title: option.label, subtitle: subtitle(index, option),
+                                       selected: index == selectedIndex) {
+                                model.setScale(screen.id, index)
+                            }
                         }
                     }
                 }
-                .disabled(!screen.enabled)
             } header: {
-                Text("Looks like")
+                Text("Text size")
             } footer: {
-                Text("Sharpest draws at 2x, exactly like iPadOS. Bigger sizes fit more on screen.")
+                Text("Default matches iPadOS exactly. More Space fits more on screen with smaller text.")
                     .foregroundStyle(.secondary)
             }
+            .disabled(!screen.enabled)
 
             Section("Arrangement") {
                 Toggle("Portrait", isOn: binding(screen.portrait) { model.setPortrait(screen.id, $0) })
@@ -80,6 +85,18 @@ struct ScreenDetailView: View {
     }
 
     private var selectedIndex: Int { min(max(screen.scaleIndex, 0), screen.options.count - 1) }
+
+    /// The sharp (2x) sizes as a Default to More Space row. The 1x size lives under All sizes.
+    private var scaleOptions: [ScaleOption] {
+        let sharp = screen.options.enumerated().filter { $0.element.hiDPI }
+        let narrowest = sharp.first?.element.width ?? 1
+        return sharp.map { index, option in
+            ScaleOption(id: String(index),
+                        title: index == 0 ? "Default" : (index == sharp.last?.offset ? "More Space" : nil),
+                        caption: option.label,
+                        textSize: ScalePicker.textSize(width: option.width, narrowest: narrowest))
+        }
+    }
 
     private func subtitle(_ index: Int, _ option: LooksLike) -> String? {
         if index == 0 { return "Sharpest" }

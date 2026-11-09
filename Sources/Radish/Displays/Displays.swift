@@ -18,11 +18,18 @@ enum Displays {
         CGDisplayVendorNumber(id) == VirtualScreenManager.vendorID
     }
 
+    /// A mirrored display has no NSScreen, so names are remembered the last time they were seen.
     static func name(_ id: CGDirectDisplayID) -> String {
-        let key = NSDeviceDescriptionKey("NSScreenNumber")
-        if let screen = NSScreen.screens.first(where: { ($0.deviceDescription[key] as? NSNumber)?.uint32Value == id }) {
+        let screenKey = NSDeviceDescriptionKey("NSScreenNumber")
+        var known = UserDefaults.standard.dictionary(forKey: "displayNames") as? [String: String] ?? [:]
+        if let screen = NSScreen.screens.first(where: { ($0.deviceDescription[screenKey] as? NSNumber)?.uint32Value == id }) {
+            if known[key(id)] != screen.localizedName {
+                known[key(id)] = screen.localizedName
+                UserDefaults.standard.set(known, forKey: "displayNames")
+            }
             return screen.localizedName
         }
+        if let remembered = known[key(id)] { return remembered }
         return CGDisplayIsBuiltin(id) != 0 ? "Built-in Display" : "Display \(id)"
     }
 
@@ -47,9 +54,11 @@ enum Displays {
         let options = [kCGDisplayShowDuplicateLowResolutionModes: kCFBooleanTrue] as CFDictionary
         let all = (CGDisplayCopyAllDisplayModes(id, options) as? [CGDisplayMode]) ?? []
         var best: [String: CGDisplayMode] = [:]
+        // Prefer the copy macOS flags as default, then the highest refresh rate.
+        func score(_ m: CGDisplayMode) -> Double { (m.ioFlags & 0x4 != 0 ? 10_000 : 0) + m.refreshRate }
         for mode in all where mode.isUsableForDesktopGUI() {
             let key = "\(mode.width)x\(mode.height)@\(mode.pixelWidth)"
-            if let existing = best[key], existing.refreshRate >= mode.refreshRate { continue }
+            if let existing = best[key], score(existing) >= score(mode) { continue }
             best[key] = mode
         }
         return best.values.sorted {

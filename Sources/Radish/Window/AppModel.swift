@@ -37,6 +37,42 @@ struct DisplayInfo: Identifiable, Hashable {
     let isMain: Bool
     let current: ModeInfo?
     let modes: [ModeInfo]
+    /// The macOS default "looks like" size, when the display reports one.
+    let defaultMode: ModeInfo?
+    /// Set when this display is showing a Radish screen.
+    let mirrorOf: CGDirectDisplayID?
+    let mirrorName: String?
+
+    /// Up to five sizes from Larger Text to More Space, the way System Settings offers them.
+    var scaleChoices: [ModeInfo] {
+        // Native = the biggest 1x mode. 2x modes report doubled pixels and can exceed the panel.
+        let largest: (ModeInfo, ModeInfo) -> Bool = { $0.pixelWidth * $0.pixelHeight < $1.pixelWidth * $1.pixelHeight }
+        let native = modes.filter { !$0.hiDPI }.max(by: largest) ?? modes.max(by: largest)
+        let hi = modes.filter(\.hiDPI)
+        var pool = hi.isEmpty ? modes : hi
+        if let native {
+            let aspect = Double(native.pixelWidth) / Double(native.pixelHeight)
+            let sameShape = pool.filter { abs(Double($0.width) / Double($0.height) - aspect) < 0.02 }
+            if sameShape.count >= 2 { pool = sameShape }
+            // Skip sizes nobody picks: huge text at the bottom, unreadable text at the top.
+            let low = hi.isEmpty ? native.pixelWidth / 2 : native.pixelWidth / 3
+            let high = hi.isEmpty ? native.pixelWidth : native.pixelWidth * 4 / 5
+            let sensible = pool.filter { (low...high).contains($0.width) }
+            if sensible.count >= 2 { pool = sensible }
+        }
+        pool.sort { $0.width < $1.width }
+        var picks = pool
+        if pool.count > 5 {
+            picks = (0..<5).map { pool[Int((Double($0) * Double(pool.count - 1) / 4).rounded())] }
+        }
+        // Always show the default and whatever is in use, replacing the nearest pick.
+        for must in [defaultMode, current].compactMap({ $0 }) where pool.contains(must) && !picks.contains(must) {
+            if let nearest = picks.indices.min(by: { abs(picks[$0].width - must.width) < abs(picks[$1].width - must.width) }) {
+                picks[nearest] = must
+            }
+        }
+        return picks.sorted { $0.width < $1.width }
+    }
 }
 
 /// What the window shows. A thin, observable view over VirtualScreenManager and Displays.
@@ -74,11 +110,19 @@ final class AppModel {
     func refresh() {
         screens = manager.screens
         displays = Displays.online()
-            .filter { !Displays.isRadish($0) && CGDisplayMirrorsDisplay($0) == kCGNullDirectDisplay }
+            .filter { !Displays.isRadish($0) }
             .map { id in
-                DisplayInfo(id: id, name: Displays.name(id), isBuiltIn: CGDisplayIsBuiltin(id) != 0,
-                            isMain: CGDisplayIsMain(id) != 0, current: Displays.current(id).map(ModeInfo.init),
-                            modes: Displays.modes(id).map(ModeInfo.init))
+                let master = CGDisplayMirrorsDisplay(id)
+                let mirrorOf = master == kCGNullDirectDisplay ? nil : master
+                let modes = Displays.modes(id)
+                return DisplayInfo(
+                    id: id, name: Displays.name(id), isBuiltIn: CGDisplayIsBuiltin(id) != 0,
+                    isMain: CGDisplayIsMain(id) != 0, current: Displays.current(id).map(ModeInfo.init),
+                    modes: modes.map(ModeInfo.init),
+                    defaultMode: modes.first { $0.ioFlags & 0x4 != 0 }.map(ModeInfo.init),   // kDisplayModeDefaultFlag
+                    mirrorOf: mirrorOf,
+                    mirrorName: mirrorOf.flatMap { m in screens.first { manager.displayID(for: $0.id) == m }?.name }
+                )
             }
         launchAtLogin = LaunchAtLogin.isEnabled
     }
@@ -109,6 +153,13 @@ final class AppModel {
         guard !trimmed.isEmpty, screens.first(where: { $0.id == id })?.name != trimmed else { return }
         manager.rename(id, trimmed)
         refresh()
+    }
+
+    /// Stops whichever Radish screen this display is mirroring.
+    func stopMirroring(_ display: DisplayInfo) {
+        guard let master = display.mirrorOf,
+              let screen = screens.first(where: { manager.displayID(for: $0.id) == master }) else { return }
+        setMirror(screen.id, false)
     }
 
     func apply(_ mode: ModeInfo, to id: CGDirectDisplayID) {

@@ -80,8 +80,9 @@ private struct DisplayRow: View {
         Label {
             VStack(alignment: .leading, spacing: 1) {
                 Text(display.name).lineLimit(1)
-                Text(display.current.map { "\($0.label)\($0.hiDPI ? ", HiDPI" : "")" } ?? "")
-                    .font(.caption).foregroundStyle(.secondary)
+                Text(display.mirrorName.map { "Mirroring \($0)" }
+                     ?? display.current.map { "\($0.label)\($0.hiDPI ? ", HiDPI" : "")" } ?? "")
+                    .font(.caption).foregroundStyle(.secondary).lineLimit(1)
             }
         } icon: {
             Image(systemName: display.isBuiltIn ? "laptopcomputer" : "display")
