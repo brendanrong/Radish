@@ -6,6 +6,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         Log.write("launch \(Bundle.main.shortVersion)")
+        // Screens start off unless asked, so a Mac that boots without the iPad looks normal.
+        if !UserDefaults.standard.bool(forKey: "connectOnLaunch") {
+            VirtualScreenManager.shared.setAllEnabled(false)
+        }
         VirtualScreenManager.shared.startAll()
         ModeMemory.shared.startObserving()
         ModeMemory.shared.scheduleRestore()

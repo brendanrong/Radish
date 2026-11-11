@@ -90,6 +90,9 @@ final class AppModel {
     var restoreResolutions = ModeMemory.shared.enabled {
         didSet { ModeMemory.shared.enabled = restoreResolutions }
     }
+    var connectOnLaunch = UserDefaults.standard.bool(forKey: "connectOnLaunch") {
+        didSet { UserDefaults.standard.set(connectOnLaunch, forKey: "connectOnLaunch") }
+    }
 
     @ObservationIgnored private var pending: DispatchWorkItem?
     @ObservationIgnored private var observer: NSObjectProtocol?

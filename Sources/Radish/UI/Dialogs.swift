@@ -10,8 +10,8 @@ enum Dialogs {
         UserDefaults.standard.set(true, forKey: askedLoginKey)
         NSApp.activate()
         let alert = NSAlert()
-        alert.messageText = "Keep this screen after a restart?"
-        alert.informativeText = "Virtual screens only exist while Radish is running. Launch Radish at login so the screen is there whenever you connect."
+        alert.messageText = "Open Radish at login?"
+        alert.informativeText = "Virtual screens only exist while Radish is running. Launch it at login so your screen is one click away in the menu bar."
         alert.addButton(withTitle: "Launch at Login")
         alert.addButton(withTitle: "Not Now")
         if alert.runModal() == .alertFirstButtonReturn { LaunchAtLogin.set(true) }

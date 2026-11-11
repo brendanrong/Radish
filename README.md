@@ -11,6 +11,7 @@ Virtual screens shaped like your iPad. A tiny macOS menu bar app that gives your
 - **HiDPI "looks like" sizes**: sharpest at 2x like iPadOS, or more space at 1.125x, 1.25x, 1.5x, or 1x native
 - **One desktop** (every screen mirrors the iPad shape, lid open or closed) or **Its own screen** (a separate desktop placed left, right, above or below your other screens), plus Use as Main Display and portrait
 - **System Settings style text size picker** (Larger Text, Default, More Space) for virtual screens and every display
+- **Screens start off** when Radish opens, so a Mac that boots without the iPad looks normal. Turn one on from the menu bar, or flip **Connect screens when Radish opens** in General
 - **Steps aside for Jump Desktop** when Jump makes its own iPad-sized display, and comes back after
 - **Resolution picker** for every display, including HiDPI modes System Settings hides
 - **Restores resolutions** you pick when a display reconnects or the Mac wakes
@@ -18,7 +19,7 @@ Virtual screens shaped like your iPad. A tiny macOS menu bar app that gives your
 
 ## With Jump Desktop
 
-1. Menu bar radish → **New Virtual Screen** → your iPad. Accept Launch at Login.
+1. Menu bar radish → **New Virtual Screen** → your iPad. Accept Launch at Login. After a restart, turn the screen back on from the menu bar.
 2. Set **Show as** to **One desktop**, or **Its own screen** and switch Jump to that monitor.
 3. In Jump Desktop on the iPad, turn on **Retina resolution** and connect.
 

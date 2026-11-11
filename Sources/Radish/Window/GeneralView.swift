@@ -24,6 +24,10 @@ struct GeneralView: View {
                     Text("Launch at login")
                     Text("Virtual screens only exist while Radish is running.")
                 }
+                Toggle(isOn: $model.connectOnLaunch) {
+                    Text("Connect screens when Radish opens")
+                    Text("Off keeps your Mac's screens as they are at startup. Turn a screen on when your iPad is ready.")
+                }
                 Toggle(isOn: $model.restoreResolutions) {
                     Text("Restore resolutions on reconnect")
                     Text("Puts back the size you picked when a display reconnects or your Mac wakes.")
